@@ -1,12 +1,13 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <docker-image>"
-    echo "Example: $0 bkimminich/juice-shop"
+    echo "Usage: $0 <docker-image> <github-repo>"
+    echo "Example: $0 bkimminich/juice-shop my-org/my-repo"
     exit 1
 fi
 
 IMAGE_NAME="$1"
+GITHUB_REPO="$2" # format: owner/repo
 
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
@@ -40,7 +41,7 @@ TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 
 DEP_PR=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-    "https://api.github.com/repos/$GITHUB_ORG/$GITHUB_REPO/pulls?state=open" \
+    "https://api.github.com/repos/$GITHUB_REPO/pulls?state=open" \
     | jq -r '[.[] | select(.user.login=="dependabot[bot]")][0].html_url')
 
 # If there is no Dependabot PR, leave it empty
