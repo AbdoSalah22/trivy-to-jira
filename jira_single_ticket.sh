@@ -56,17 +56,25 @@ DEP_PR_TEXT=""
 if [ -n "$REPO_NAME" ]; then
     echo "[INFO] Checking for Dependabot PRs in $REPO_NAME"
 
-    DEP_PR_URL=$(curl -s \
+    RESPONSE=$(curl -s \
         -H "Authorization: token $GITHUB_TOKEN" \
-        "https://api.github.com/repos/$REPO_NAME/pulls?state=open" |
-        jq -r '
-          [.[] | select(.user.login=="dependabot[bot]")][0].html_url
+        "https://api.github.com/repos/$REPO_NAME/pulls?state=open")
+
+    # Check if repo exists
+    if echo "$RESPONSE" | jq -e '.message? | contains("Not Found")' >/dev/null; then
+        echo "[ERROR] Repository '$REPO_NAME' not found or inaccessible."
+        DEP_PR_TEXT="Repository not found or inaccessible."
+	exit 1
+    else
+        DEP_PR_URL=$(echo "$RESPONSE" | jq -r '
+            [.[] | select(.user.login=="dependabot[bot]")][0].html_url
         ')
 
-    if [ "$DEP_PR_URL" != "null" ] && [ -n "$DEP_PR_URL" ]; then
-        DEP_PR_TEXT="Related Dependabot PR: $DEP_PR_URL"
-    else
-        DEP_PR_TEXT="No related Dependabot PR found."
+        if [ "$DEP_PR_URL" != "null" ] && [ -n "$DEP_PR_URL" ]; then
+            DEP_PR_TEXT="Related Dependabot PR: $DEP_PR_URL"
+        else
+            DEP_PR_TEXT="No related Dependabot PR found."
+        fi
     fi
 fi
 
