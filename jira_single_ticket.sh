@@ -1,13 +1,26 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-    echo "Usage: $0 <docker-image> <github-repo>"
-    echo "Example: $0 bkimminich/juice-shop my-org/my-repo"
+
+IMAGE_NAME=""
+REPO_NAME=""
+
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --image) IMAGE_NAME="$2"; shift ;;
+        --repo)  REPO_NAME="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+
+if [ -z "$IMAGE_NAME" ]; then
+    echo "Usage: $0 --image <docker-image> [--repo <github-repo>]"
+    echo "Example: $0 --image bkimminich/juice-shop --repo AbdoSalah22/trivy-to-jira"
     exit 1
 fi
 
-IMAGE_NAME="$1"
-GITHUB_REPO="$2" # format: owner/repo
 
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
@@ -28,7 +41,6 @@ else
 fi
 
 
-
 VULN_LIST=$(trivy image "$IMAGE_NAME" \
     --scanners vuln \
     --severity HIGH,CRITICAL \
@@ -40,15 +52,22 @@ VULN_LIST=$(trivy image "$IMAGE_NAME" \
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 
-DEP_PR=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-    "https://api.github.com/repos/$GITHUB_REPO/pulls?state=open" \
-    | jq -r '[.[] | select(.user.login=="dependabot[bot]")][0].html_url')
+DEP_PR_TEXT=""
+if [ -n "$REPO_NAME" ]; then
+    echo "[INFO] Checking for Dependabot PRs in $REPO_NAME"
 
-# If there is no Dependabot PR, leave it empty
-if [ "$DEP_PR" = "null" ] || [ -z "$DEP_PR" ]; then
-    DEP_PR_TEXT="No related Dependabot PR found."
-else
-    DEP_PR_TEXT="Related Dependabot PR: $DEP_PR"
+    DEP_PR_URL=$(curl -s \
+        -H "Authorization: token $GITHUB_TOKEN" \
+        "https://api.github.com/repos/$REPO_NAME/pulls?state=open" |
+        jq -r '
+          [.[] | select(.user.login=="dependabot[bot]")][0].html_url
+        ')
+
+    if [ "$DEP_PR_URL" != "null" ] && [ -n "$DEP_PR_URL" ]; then
+        DEP_PR_TEXT="Related Dependabot PR: $DEP_PR_URL"
+    else
+        DEP_PR_TEXT="No related Dependabot PR found."
+    fi
 fi
 
 
@@ -70,7 +89,6 @@ curl -s -X POST \
   -u "$EMAIL:$API_TOKEN" \
   --data @- \
   "$JIRA_URL/rest/api/2/issue/" | jq .
-
 
 
 echo "=========== SCAN AND JIRA DONE =========="
