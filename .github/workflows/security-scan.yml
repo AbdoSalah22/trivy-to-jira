@@ -28,9 +28,12 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Install dependencies and run script
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y jq curl wget
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+
+      - name: Run security scan and create Jira ticket
+        run: |
           ./jira_single_ticket.sh --image "${{ github.event.inputs.image }}" --repo "${{ github.repository }}"
