@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
-      EMAIL: ${{ secrets.JIRA_EMAIL }}
-      API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       JIRA_URL: ${{ secrets.JIRA_URL }}
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
