@@ -82,7 +82,7 @@ fi
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 jq -n \
-  --arg project "$PROJECT_KEY" \
+  --arg project "$JIRA_PROJECT_KEY" \
   --arg summary "$IMAGE_NAME - $TIMESTAMP: Trivy Vulnerabilities Scan Report" \
   --arg description "$(printf "%s\n\n%s" "$VULN_LIST" "$DEP_PR_TEXT")" \
   '{
@@ -96,7 +96,7 @@ jq -n \
   }' |
 curl -s -X POST \
   -H "Content-Type: application/json" \
-  -u "$EMAIL:$API_TOKEN" \
+  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   --data @- \
   "$JIRA_URL/rest/api/2/issue/" | jq .
 
