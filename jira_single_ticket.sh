@@ -46,10 +46,12 @@ VULN_LIST=$(trivy image "$IMAGE_NAME" \
     --severity HIGH,CRITICAL \
     --format json |
     jq -r '.Results[].Vulnerabilities[] |
-        "- \(.Severity): \(.Title)\n  Description: \(.Description)\n"' )
-
-
-TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+        "- \(.Severity): \(.Title)
+  Installed: \(.InstalledVersion)
+  Fixed: \(.FixedVersion // "N/A")
+  Help: \(.PrimaryURL)
+"'
+)
 
 
 DEP_PR_TEXT=""
@@ -78,10 +80,11 @@ if [ -n "$REPO_NAME" ]; then
     fi
 fi
 
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 jq -n \
   --arg project "$PROJECT_KEY" \
-  --arg summary "$IMAGE_NAME - $TIMESTAMP: High/Critical Vulnerabilities Trivy Security Scan" \
+  --arg summary "$IMAGE_NAME - $TIMESTAMP: Trivy Vulnerabilities Scan Report" \
   --arg description "$(printf "%s\n\n%s" "$VULN_LIST" "$DEP_PR_TEXT")" \
   '{
     fields: {
