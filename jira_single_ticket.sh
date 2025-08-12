@@ -22,12 +22,11 @@ if [ -z "$IMAGE_NAME" ]; then
 fi
 
 
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
-else
-    echo ".env file not found"
-    exit 1
-fi
+: "${JIRA_PROJECT_KEY:?JIRA_PROJECT_KEY not set}"
+: "${JIRA_EMAIL:?JIRA_EMAIL not set}"
+: "${JIRA_API_TOKEN:?JIRA_API_TOKEN not set}"
+: "${JIRA_URL:?JIRA_URL not set}"
+: "${GH_TOKEN:?GH_TOKEN not set}"
 
 
 if docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
@@ -59,7 +58,7 @@ if [ -n "$REPO_NAME" ]; then
     echo "[INFO] Checking for Dependabot PRs in $REPO_NAME"
 
     RESPONSE=$(curl -s \
-        -H "Authorization: token $GITHUB_TOKEN" \
+        -H "Authorization: token $GH_TOKEN" \
         "https://api.github.com/repos/$REPO_NAME/pulls?state=open")
 
     # Check if repo exists

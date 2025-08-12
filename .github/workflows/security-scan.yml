@@ -1,0 +1,44 @@
+name: Trivy to Jira Security Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Docker image name"
+        required: true
+      # repo:
+      #   description: "GitHub repo to check for Dependabot PRs (owner/repo)"
+      #   required: false
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+      EMAIL: ${{ secrets.JIRA_EMAIL }}
+      API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      JIRA_URL: ${{ secrets.JIRA_URL }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get install trivy
+
+
+      - name: Run security scan and create Jira ticket
+        run: |
+          ./jira_single_ticket.sh --image "${{ github.event.inputs.image }}" --repo "${{ github.repository }}"
