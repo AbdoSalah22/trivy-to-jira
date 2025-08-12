@@ -1,4 +1,4 @@
-FROM httpd:2.2.34-alpine
+FROM httpd:2.4.65-alpine
 
 WORKDIR /usr/local/apache2/htdocs/
 
