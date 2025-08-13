@@ -67,12 +67,13 @@ if [ -n "$REPO_NAME" ]; then
         DEP_PR_TEXT="Repository not found or inaccessible."
 	exit 1
     else
-        DEP_PR_URL=$(echo "$RESPONSE" | jq -r '
-            [.[] | select(.user.login=="dependabot[bot]")][0].html_url
-        ')
+        DEP_PR_URLS=$(echo "$RESPONSE" | jq -r '.[] | select(.user.login=="dependabot[bot]").html_url')
 
-        if [ "$DEP_PR_URL" != "null" ] && [ -n "$DEP_PR_URL" ]; then
-            DEP_PR_TEXT="Related Dependabot PR: $DEP_PR_URL"
+        if [ -n "$DEP_PR_URLS" ]; then
+            DEP_PR_TEXT="Related Dependabot PRs:"
+            while IFS= read -r url; do
+                DEP_PR_TEXT="$DEP_PR_TEXT\n- $url"
+            done <<< "$DEP_PR_URLS"
         else
             DEP_PR_TEXT="No related Dependabot PR found."
         fi
