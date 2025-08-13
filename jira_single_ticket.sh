@@ -72,7 +72,7 @@ if [ -n "$REPO_NAME" ]; then
         if [ -n "$DEP_PR_URLS" ]; then
             DEP_PR_TEXT="Related Dependabot PRs:"
             while IFS= read -r url; do
-                DEP_PR_TEXT="$DEP_PR_TEXT\n- $url"
+                DEP_PR_TEXT="$(printf "%s\n- %s" "$DEP_PR_TEXT" "$url")"
             done <<< "$DEP_PR_URLS"
         else
             DEP_PR_TEXT="No related Dependabot PR found."
