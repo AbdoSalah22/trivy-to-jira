@@ -87,24 +87,48 @@ fi
 
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
-jq -n \
-  --arg project "$JIRA_PROJECT_KEY" \
-  --arg summary "$IMAGE_NAME - $TIMESTAMP: Trivy Vulnerabilities Scan Report" \
-  --arg description "$(printf "%s\n\n%s" "$VULN_LIST" "$DEP_PR_TEXT")" \
-  '{
-    fields: {
-      project: { key: $project },
-      summary: $summary,
-      description: $description,
-      issuetype: { name: "Task" },
-      labels: ["Trivy", "Vulnerability", "Scan"]
-    }
-  }' |
-curl -s -X POST \
+
+JQL="project=$JIRA_PROJECT_KEY AND summary~\"${IMAGE_NAME} Security Scan Report\""
+JIRA_SEARCH=$(curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-  --data @- \
-  "$JIRA_URL/rest/api/2/issue/" | jq .
+  "$JIRA_URL/rest/api/2/search?jql=$(printf '%s' "$JQL" | jq -s -R -r @uri)&maxResults=1")
+
+
+EXISTING_ISSUE_KEY=$(echo "$JIRA_SEARCH" | jq -r '.issues[0].key // empty')
+echo "[DEBUG] Existing Issue Key: $EXISTING_ISSUE_KEY"
+
+
+if [ -n "$EXISTING_ISSUE_KEY" ]; then
+  jq -n \
+    --arg description "$(printf "Scanned at: %s\n\n%s\n\n%s" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
+    '{fields: {description: $description}}' |
+  curl -s -X PUT \
+    -H "Content-Type: application/json" \
+    -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+    --data @- \
+    "$JIRA_URL/rest/api/2/issue/$EXISTING_ISSUE_KEY"
+    echo "[INFO] Existing Jira Ticket Updated Successfully"
+else
+    jq -n \
+    --arg project "$JIRA_PROJECT_KEY" \
+    --arg summary "$IMAGE_NAME Security Scan Report" \
+    --arg description "$(printf "Scanned at: %s\n\n%s\n\n%s" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
+    '{
+        fields: {
+        project: { key: $project },
+        summary: $summary,
+        description: $description,
+        issuetype: { name: "Task" },
+        labels: ["Trivy", "Vulnerability", "Scan"]
+        }
+    }' |
+    curl -s -X POST \
+    -H "Content-Type: application/json" \
+    -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+    --data @- \
+    "$JIRA_URL/rest/api/2/issue/" | jq .
+    echo "[INFO] New Jira Ticket Created Successfully"
+fi
 
 
 echo "=========== SCAN AND JIRA DONE =========="
