@@ -91,7 +91,7 @@ JIRA_SEARCH=$(curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   "$JIRA_URL/rest/api/2/search?jql=$(printf '%s' "$JQL" | jq -s -R -r @uri)&maxResults=1")
 
 EXISTING_ISSUE_KEY=$(echo "$JIRA_SEARCH" | jq -r '.issues[0].key // empty')
-echo "[DEBUG] Existing Issue Key: $EXISTING_ISSUE_KEY"
+echo "[INFO] Existing Issue Key: $EXISTING_ISSUE_KEY"
 
 # Update existing Jira ticket or create a new one
 if [ -n "$EXISTING_ISSUE_KEY" ]; then
