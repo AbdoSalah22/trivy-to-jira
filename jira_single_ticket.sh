@@ -16,8 +16,13 @@ done
 
 
 if [ -z "$IMAGE_NAME" ]; then
-    echo "Usage: $0 --image <docker-image> [--repo <github-repo>]"
-    echo "Example: $0 --image bkimminich/juice-shop --repo AbdoSalah22/trivy-to-jira"
+    echo "Usage: $0 --image <docker-image> --repo <github-repo>"
+    echo "Example: $0 --image bkimminich/juice-shop --repo User123/my-repo"
+    exit 1
+fi
+
+if [ -z "$REPO_NAME" ]; then
+    echo "Error: --repo <github-repo> is required."
     exit 1
 fi
 
