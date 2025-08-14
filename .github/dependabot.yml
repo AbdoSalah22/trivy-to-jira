@@ -4,13 +4,25 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      docker-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      npm-updates:
+        patterns:
+          - "*"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      pip-updates:
+        patterns:
+          - "*"
