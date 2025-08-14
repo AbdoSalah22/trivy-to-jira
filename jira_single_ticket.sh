@@ -1,10 +1,10 @@
 #!/bin/bash
 
-
+# Initialize variables for image and repo names
 IMAGE_NAME=""
 REPO_NAME=""
 
-
+# Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --image) IMAGE_NAME="$2"; shift ;;
@@ -14,26 +14,21 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-
-if [ -z "$IMAGE_NAME" ]; then
+# Check if required arguments are provided
+if [ -z "$IMAGE_NAME" ] || [ -z "$REPO_NAME" ]; then
     echo "Usage: $0 --image <docker-image> --repo <github-repo>"
-    echo "Example: $0 --image bkimminich/juice-shop --repo User123/my-repo"
+    echo "Example: $0 --image author/image-name --repo User123/my-repo"
     exit 1
 fi
 
-if [ -z "$REPO_NAME" ]; then
-    echo "Error: --repo <github-repo> is required."
-    exit 1
-fi
-
-
+# Ensure required environment variables are set
 : "${JIRA_PROJECT_KEY:?JIRA_PROJECT_KEY not set}"
 : "${JIRA_EMAIL:?JIRA_EMAIL not set}"
 : "${JIRA_API_TOKEN:?JIRA_API_TOKEN not set}"
 : "${JIRA_URL:?JIRA_URL not set}"
 : "${GH_TOKEN:?GH_TOKEN not set}"
 
-
+# Check if Docker image exists locally, pull if not
 if docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
     echo "Image found locally: $IMAGE_NAME"
 else
@@ -44,7 +39,7 @@ else
     fi
 fi
 
-
+# Run Trivy scan on the Docker image
 VULN_LIST=$(trivy image "$IMAGE_NAME" \
     --scanners vuln \
     --severity HIGH,CRITICAL \
@@ -57,7 +52,7 @@ VULN_LIST=$(trivy image "$IMAGE_NAME" \
 "'
 )
 
-
+# Check for open Dependabot PRs in the repo
 DEP_PR_TEXT=""
 if [ -n "$REPO_NAME" ]; then
     echo "[INFO] Checking for Dependabot PRs in $REPO_NAME"
@@ -74,6 +69,7 @@ if [ -n "$REPO_NAME" ]; then
     else
         DEP_PR_URLS=$(echo "$RESPONSE" | jq -r '.[] | select(.user.login=="dependabot[bot]").html_url')
 
+        # List related Dependabot PRs if any
         if [ -n "$DEP_PR_URLS" ]; then
             DEP_PR_TEXT="Related Dependabot PRs:"
             while IFS= read -r url; do
@@ -85,19 +81,19 @@ if [ -n "$REPO_NAME" ]; then
     fi
 fi
 
-TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+# Timestamp for the scan
+TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
-
+# Search for existing Jira ticket with matching summary
 JQL="project=$JIRA_PROJECT_KEY AND summary~\"${IMAGE_NAME} Security Scan Report\""
 JIRA_SEARCH=$(curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   -H "Content-Type: application/json" \
   "$JIRA_URL/rest/api/2/search?jql=$(printf '%s' "$JQL" | jq -s -R -r @uri)&maxResults=1")
 
-
 EXISTING_ISSUE_KEY=$(echo "$JIRA_SEARCH" | jq -r '.issues[0].key // empty')
 echo "[DEBUG] Existing Issue Key: $EXISTING_ISSUE_KEY"
 
-
+# Update existing Jira ticket or create a new one
 if [ -n "$EXISTING_ISSUE_KEY" ]; then
   jq -n \
     --arg description "$(printf "Scanned at: %s\n\n%s\n\n%s" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
@@ -129,6 +125,5 @@ else
     "$JIRA_URL/rest/api/2/issue/" | jq .
     echo "[INFO] New Jira Ticket Created Successfully"
 fi
-
 
 echo "=========== SCAN AND JIRA DONE =========="
