@@ -19,7 +19,8 @@ jobs:
       JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
       JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       JIRA_URL: ${{ secrets.JIRA_URL }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # GH_TOKEN: ${{ secrets.GH_TOKEN }} # use this for cross repo access
 
     steps:
       - name: Checkout repository
