@@ -96,7 +96,7 @@ echo "[INFO] Existing Issue Key: $EXISTING_ISSUE_KEY"
 # Update existing Jira ticket or create a new one
 if [ -n "$EXISTING_ISSUE_KEY" ]; then
   jq -n \
-    --arg description "$(printf "Scanned at: %s\n\n%s\n\n%s" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
+    --arg description "$(printf "Image: %s\n\nScanned at: %s\n\n%s\n\n%s" "$IMAGE_NAME" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
     '{fields: {description: $description}}' |
   curl -s -X PUT \
     -H "Content-Type: application/json" \
