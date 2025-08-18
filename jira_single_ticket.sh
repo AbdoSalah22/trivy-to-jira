@@ -85,7 +85,7 @@ fi
 TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
 # Search for existing Jira ticket with matching summary
-JQL="project=$JIRA_PROJECT_KEY AND summary~\"${IMAGE_NAME} Security Scan Report\""
+JQL="project=$JIRA_PROJECT_KEY AND summary~\"${REPO_NAME} Security Scan Report\""
 JIRA_SEARCH=$(curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   -H "Content-Type: application/json" \
   "$JIRA_URL/rest/api/2/search?jql=$(printf '%s' "$JQL" | jq -s -R -r @uri)&maxResults=1")
