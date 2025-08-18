@@ -107,8 +107,8 @@ if [ -n "$EXISTING_ISSUE_KEY" ]; then
 else
     jq -n \
     --arg project "$JIRA_PROJECT_KEY" \
-    --arg summary "$IMAGE_NAME Security Scan Report" \
-    --arg description "$(printf "Scanned at: %s\n\n%s\n\n%s" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
+    --arg summary "$REPO_NAME Security Scan Report" \
+    --arg description "$(printf "Image: %s\n\nScanned at: %s\n\n%s\n\n%s" "$IMAGE_NAME" "$TIMESTAMP" "$VULN_LIST" "$DEP_PR_TEXT")" \
     '{
         fields: {
         project: { key: $project },
